@@ -6,6 +6,7 @@
 using namespace std;
 typedef long long ll;
 const int sz=2e5+1;
+//This is the correct idea for the problems however still need to hash and some optimization to get AC 
 int n,x,k,i,q,j,w,m,mod;
 ll trs[sz];
 string sup[19][sz];
