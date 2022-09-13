@@ -6,100 +6,31 @@
 using namespace std;
 typedef long long ll;
 const int sz=2e5+1;
-//This is the correct idea for the problems however still need to hash and some optimization to get AC 
 int n,x,k,i,q,j,w,m,mod;
-ll trs[sz];
-string sup[19][sz];
-string num[sz];
+ll num[sz];
 ll up[19][sz];
+ll val[19][sz];
+ll vald[19][sz];
 ll dp[sz];
-ll tour[sz],id[sz],top[sz];
+ll mul[sz];
 vector<ll>adj[sz];
 int timer=1; 
-string tree[sz<<1];
-string tree1[sz<<1];
-ll jump(int x,int d){
+int jump(int x,int d){
     for(int i=0;i<=18;i++){
         if((d>>i)&1) x=up[i][x];
-    }return x;
+    }
+    return x;
 }
-ll dfs(int u){
-    trs[u]=1;
+void dfs(int u){
     for(int i=1;i<=18;i++){
         up[i][u]=up[i-1][up[i-1][u]];
     }
     for(auto v:adj[u]){
         if(v==up[0][u]) continue;
         dp[v]=dp[up[0][v]=u]+1;
-        trs[u]+=dfs(v);
-    } return trs[u];
-}
-void dfs_hld(int u,int anc){
-    tour[timer]=u;
-    id[u]=timer++;
-    top[u]=anc;
-    int hchi=0;
-    int hsize=0;
-    for(auto v:adj[u]){
-        if(v==up[0][u]) continue;
-        if(hsize<trs[v]){
-            hsize=trs[v];
-            hchi=v;
-        }
+        val[0][v]=vald[0][v]=num[u];
+        dfs(v);
     }
-    if(hchi==0) return;
-    dfs_hld(hchi,anc);
-    for(auto v:adj[u]){
-        if(v==up[0][u] or v==hchi) continue;
-        dfs_hld(v,v);
-    } 
-}
-void build(int l=1,int r=n,int p=1){
-    if(l==r){
-        tree[p]=tree1[p]=num[tour[l]];
-        return;
-    }
-    int mid=(l+r)>>1;
-    build(l,mid,2*p);
-    build(mid+1,r,2*p+1);
-    tree[p]=tree[2*p]+tree[2*p+1];
-    tree1[p]=tree1[2*p+1]+tree1[2*p];
-}
-string query(int L,int R, int l=1,int r=n,int p=1){
-    if(L>r or l>R) return"";
-    if(L<=l and r<=R) return tree1[p];
-    int mid=(l+r)>>1;
-    string s0=query(L,R,mid+1,r,2*p+1)+query(L,R,l,mid,2*p);
-    return s0;
-}
-string query1(int L,int R, int l=1,int r=n,int p=1){
-    if(L>r or l>R) return "";
-    if(L<=l and r<=R) return tree[p];
-    int mid=(l+r)>>1;
-    string s0=query1(L,R,l,mid,2*p)+query1(L,R,mid+1,r,2*p+1);
-    return s0;
-}
-string path_up(int x,int y){
-    string s="";
-    while(top[x]!=top[y]){
-        if(dp[top[x]]<dp[top[y]]) swap(x,y);
-        s=s+query(id[top[x]],id[x]);
-        x=up[0][top[x]];
-    }
-    if(dp[x]>dp[y]) swap(x,y);
-    s=s+query(id[x],id[y]);
-    return s;
-}
-string path_down(int x,int y){
-    string s="";
-    while(top[x]!=top[y]){
-        if(dp[top[x]]<dp[top[y]]) swap(x,y);
-        s=query1(id[top[x]],id[x])+s;
-        x=up[0][top[x]];
-    }
-    if(dp[x]>dp[y]) swap(x,y);
-    s=query1(id[x]+1,id[y])+s;
-    return s;
 }
 int lca(int a ,int b){
     if(dp[a]<dp[b]) swap(a,b);
@@ -110,13 +41,36 @@ int lca(int a ,int b){
         if(ta!=tb) a=ta,b=tb;
     } return up[0][a];
 }
-ll convert(string s, ll mod){
-    ll res=0; ll mul=1;
-    for(int i=s.length()-1;i>=0;i--){
-        res+=(ll) mul*((s[i]-'0')%mod);
-        mul=((ll) mul*10)%mod;
-    } 
-    return res;
+void push(){
+    for(int i=1;i<=18;i++){
+        for(int j=1;j<=n;j++){
+            val[i][j]=(val[i-1][j]*mul[(1<<(i-1))]%mod+val[i-1][up[i-1][j]])%mod;
+            vald[i][j]=(vald[i-1][j]+vald[i-1][up[i-1][j]]*mul[1<<(i-1)]%mod)%mod;
+        }
+    }
+}
+ll jumpup(int x, int d){
+    ll ans=0;
+    for(int i=0;i<=18;i++){
+        if((d>>i)&1){
+            ans=ans%mod*mul[1<<i]%mod;
+            ans=(ans+val[i][x])%mod;
+            x=up[i][x];
+        }
+    }
+    return ans;
+}
+ll jumpdown(int x, int d){
+    ll ans=num[x];
+    ll prevbit=1;
+    for(int i=0;i<=18;i++){
+        if((d>>i)&1){
+            ans=(ans+vald[i][x]*mul[prevbit]%mod)%mod;
+            prevbit+=(1<<i);
+            x=up[i][x];
+        }
+    }
+    return ans;
 }
 int main(){
     cin>>n>>mod>>q;
@@ -125,15 +79,27 @@ int main(){
          adj[v].push_back(u);
          adj[u].push_back(v);
     }
+    mul[0]=1;
+    for(int i=1;i<=n;i++){
+        mul[i]=((ll) mul[i-1]*10)%mod;
+    }
     for(int i=1;i<=n;i++) cin>>num[i];
+    up[0][1]=1;
     dfs(1); 
-    dfs_hld(1,1);
-    build();
-    for(int i=0;i<q;i++){
+    push();
+    for(int i=1;i<=q;i++){
         ll u,v;cin>>u>>v;
-        int t=lca(u,v);
-        string s0=path_up(u,t)+path_down(t,v);
-        ll res=convert(s0,mod);
+        int anc=lca(u,v);
+        int ancv=jump(v,dp[v]-dp[anc]-1);
+        ll res=0;
+        ll  go_up=(num[u]*mul[dp[u]-dp[anc]])%mod;
+        if(v!=anc and u!=anc){
+            res=(res+go_up+jumpup(u,dp[u]-dp[anc]))%mod;
+            res=res%mod*mul[dp[v]-dp[anc]]%mod;
+            res=(res+jumpdown(v,dp[v]-dp[ancv]))%mod;
+        }
+        else if(u==anc) res=jumpdown(v,dp[v]-dp[anc])%mod;
+        else if(v==anc) res=(go_up+jumpup(u,dp[u]-dp[anc]))%mod;
         cout<<res<<endl;
     }
 }
