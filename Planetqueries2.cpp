@@ -1,82 +1,81 @@
 #include <bits/stdc++.h>
+#include <iostream>
+#include<queue>
+#include<map>
+#include<vector>
+#include<utility>
+#include <ext/pb_ds/assoc_container.hpp>
 using namespace std;
 typedef long long ll;
+typedef long double ld;
+const int sz1=5e6+1;
 const int sz=2e5+1;
-ll n,k,m,q;
-int timer=1;
-int st[1<<19],trs[sz],dep[sz];
-int id[sz],top[sz],a[sz];
-int par[sz];
+int deg[sz];
+ll n,y,z,dx,p,a,c,b,m,q;
+int movex[4]={0,0,1,-1};
+int movey[4]={-1,1,0,0};
+vector<array<ll,4>>edge;
+bool yes=0;
+ll res=0;
+ll dp[sz];
+ll up[25][sz];
+ll succ[25][sz];
+const int mod=998244353;
+vector<ll>fac,finv,inv;
+vector<ll>d1;
+vector<array<ll,2>>ans;
+vector<vector<ll>>d2;
+vector<ll>anc[sz];
 vector<ll>adj[sz];
-void update(int idx,ll val){
-    st[idx+=n]=val;
-    for(idx/=2;idx;idx/=2){
-        st[idx]=max(st[idx*2],st[idx*2+1]);
-    }
+bool vis[sz];
+ll jump(ll x, ll d){
+    for(int i=0;i<=20;i++){
+        if((d>>i)&1) x=succ[i][x];
+    } return x ;
 }
-int query(int lo ,int high){
-    int ra=0;int  rb=0;
-    for(lo+=n,high+=n+1;lo<high;lo/=2,high/=2){
-        if(lo&1) ra=max(ra,st[lo++]);
-        if(high&1) rb=max(rb,st[--high]);
-    } return max(ra,rb); 
-}
-ll dfs(int u,int p){
-    trs[u]=1;
-    for(auto v:adj[u]){
-        if(v==p) continue;
-        par[v]=u;
-        dep[v]=dep[u]+1;
-        trs[u]+=dfs(v,u);
-    } return trs[u];
-}
-void dfs_hld(int u,int anc){
-    id[u]=timer++;
-    top[u]=anc;
-    update(id[u],a[u]);
-    int hchi,hsize;
-    for(auto v:adj[u]){
-        if(v==par[u]) continue;
-        if(hsize<trs[v]){hsize=trs[v];hchi=v;}
-    }
-    if(hchi==0) return;
-    dfs_hld(hchi,anc);
-    for(auto v:adj[u]){
-        if(v==par[u] or v==hchi) continue;
-        dfs_hld(v,v);
-    }
-}
-ll path(int x,int y){
-    int ret=0;
-    while(top[x]!=top[y]){
-       if(dep[top[x]]<dep[top[y]])swap(x,y);
-       ret=max(ret,query(id[top[x]],id[x]));
-       x=par[id[x]];
-    }   
-    if(dep[x]>dep[y]) swap(x,y);
-    ret=max(ret,query(id[x],id[y]));
-    return ret;
+void dfs(int u){
+    if(vis[u]) return;
+    vis[u]=1;
+    dfs(succ[0][u]);
+    dp[u]=dp[succ[0][u]]+1;
 }
 int main(){
     cin>>n>>q;
-    for(int i=1;i<=n;i++) cin>>a[i];
-    for(int i=0;i<n-1;i++){
+    for(int i=1;i<=n;i++){ 
+      cin>>succ[0][i];
+      if(succ[0][i]!=i) deg[succ[0][i]]++;
+    }
+    for(int i=1;i<=n;i++){
+        if(!vis[i]) dfs(i);
+    }
+    for(int i=1;i<=20;i++){
+        for(int j=1;j<=n;j++){
+            succ[i][j]=succ[i-1][succ[i-1][j]];
+        }
+    }
+    bool iscycled = true;
+    for(int i=1;i<n;i++){
+        if(deg[i]!=1){
+            iscycled=false;
+            break; 
+        }
+    }
+    if(iscycled == true){
+       for(int i=1;i<=q;i++){
+            int u,v; cin>>u>>v;
+            if(dp[u]>dp[v]) cout<<dp[u]-dp[v]<<endl;
+            else cout<< n-(dp[v]-dp[u])<<endl;
+       }   
+       return 0; 
+    }
+    for(int i=0;i<q;i++){
         ll u,v;cin>>u>>v;
-        adj[v].push_back(u);
-        adj[u].push_back(v);
-    } dfs(1,0);
-      dfs_hld(1,1);
-       for(int i=0;i<q;i++){
-          ll t,u,v; cin>>t;
-          if(t==1){
-              cin>>u>>v;
-              a[u]=v;
-              update(u,v);
-          }
-          if(t==2){
-              cin>>u>>v;
-              int x=path(v,u);
-              cout<<x<<" ";
-          }
-      }
+        ll p=jump(u,dp[u]);
+        ll str=dp[u]-dp[v]; ll str1=dp[p]+dp[u];
+        p=jump(p,dp[p]-dp[v]);
+        u=jump(u,dp[u]-dp[v]);
+        if(u==v) cout<<str<<endl;
+        else if(v==p) cout<<-dp[v]+str1<<endl;
+        else cout<<-1<<endl;
+    }
 } 
