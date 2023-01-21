@@ -66,10 +66,6 @@ int main(){
           adj[v].push_back(u); 
      }
      dfs(1,0);
-     if(n == 100 and q == 1){
-        cout<<90;
-        return 0;
-     }
      set<pair<int,int>>edges;
      for(int i = 0; i < q; i++){
           int u,v; scanf("%d%d",&u,&v);
