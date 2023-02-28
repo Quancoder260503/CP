@@ -1,16 +1,3 @@
-#include <bits/stdc++.h>
-using namespace std;
-typedef long long ll;
-const int sz=5e5+10;
-const int inf=1e6+1;
-int n,k,m,q,add,dis;
-ll timer=1;
-vector<ll>adj[sz];
-ll col[sz];
-int dp[sz],up[20][sz];
-int st[sz],en[sz];
-set<array<int,2>>col_num[sz];
-int bit[sz];
 // for each color we are going to find the lca of (i,i+1) node the color order (Sort by DFS order). 
 // add each lca by -1 and both color node by 1 
 // how does this work --> assume st[i1]<=st[i2]<=st[i3]
