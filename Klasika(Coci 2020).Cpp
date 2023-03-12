@@ -128,3 +128,101 @@ int main(){
      }
      return 0; 
 }
+//AC 
+#include <bits/stdc++.h>
+#pragma GCC target("popcnt")
+using namespace std;
+typedef long long ll;
+#define block 467
+typedef pair<int,int> pii;
+const int sz = 4e5 + 1;
+const int N = 2e5 + 10;
+const int M = 1e6 + 10;
+const int mod = (1 << 32);
+long long n,m,k,q,x;
+vector<pii>adj[N + 1];
+vector<pair<string,pii>>queries; 
+int timer = 0;
+int in[N + 1],out[N + 1];
+long long dp[N + 1]; 
+long long blk[N + 1];
+long long to[N + 1]; 
+bool vis[N + 1];
+struct Node {
+        set<int>s;
+        Node *c[2];
+};
+Node *root = new Node(); 
+void insert(Node *node,int x,int bit,int id){
+      node -> s.insert(id); 
+      if(bit < 0) return;
+      if(x & (1 << bit)){
+           if(!node -> c[1]) node -> c[1] = new Node();
+           insert(node -> c[1],x,bit - 1,id); 
+      }
+      else{
+           if(!node -> c[0]) node -> c[0] = new Node();
+           insert(node -> c[0],x,bit - 1,id); 
+      }
+} 
+long long query(Node *node, int x,int bit, int from, int to){
+       if(bit < 0) return 0;
+       if(x & (1 << bit)){
+            if(!node -> c[0]){
+                 return query(node -> c[1],x,bit - 1,from,to); 
+            }
+            if(node -> c[0] -> s.lower_bound(from) == node -> c[0] -> s.upper_bound(to)){
+                 return query(node -> c[1],x,bit - 1,from,to); 
+            }
+            return (1 << bit) + query(node -> c[0], x, bit - 1, from, to); 
+       }
+       else{
+            if(!node -> c[1]){
+                 return query(node -> c[0],x,bit - 1,from,to); 
+            }
+            if(node -> c[1] -> s.lower_bound(from) == node -> c[1] -> s.upper_bound(to)){
+                 return query(node -> c[0],x,bit - 1,from,to); 
+            }
+            return (1 << bit) + query(node -> c[1], x, bit - 1, from, to); 
+       }
+     
+}
+void dfs(int u,int p){
+      in[u] = ++timer; 
+      for(int i = 0; i < adj[u].size(); i++){
+            int v = adj[u][i].first;
+            if(v == p) continue;   
+            dfs(v,u); 
+      } 
+      out[u] = timer;
+}
+int main(){
+     scanf("%d",&q);
+     int node = 1;
+     for(int i = 1; i <= q; i++){
+          string s; int u,w; 
+          cin >> s >> u >> w;
+          if(s == "Add"){
+              adj[u].push_back({++node,w}); 
+              dp[node] = dp[u] xor w; 
+              queries.push_back({s,{u,node}}); 
+          }
+          else{
+              queries.push_back({s,{u,w}}); 
+          }
+     }
+     dfs(1,0); 
+     insert(root,0,30,in[1]);
+     for(int i = 0; i < queries.size(); i++){
+            pii v = queries[i].second;
+            string s = queries[i].first;
+            if(s == "Add"){
+                insert(root,dp[v.second],30,in[v.second]);     
+            }
+            else{
+                long long ans = query(root,dp[v.first],30,in[v.second],out[v.second]);
+                printf("%lld\n",ans); 
+            }
+     }
+     return 0; 
+}
