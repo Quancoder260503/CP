@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+#include <iostream>
+#include<queue>
+#include<vector>
+#include<utility>
+using namespace std;
+typedef long long ll;
+const int sz=1e5+1;
+vector<pair<int,ll>>g[sz];
+int s,t,u,v;
+int n,m;
+ll res;
+ll d0[sz];
+ll d1[sz];
+ll par[sz];
+vector<ll>dpu(sz,LLONG_MAX);
+vector<ll>dpv(sz,LLONG_MAX);
+vector<ll>dx(sz,LLONG_MAX);
+void dijisktra(int src, ll d[sz]){
+    using T=pair<ll,int>;
+    priority_queue<T,vector<T>,greater<T>>pq;
+    pq.push({0,src});
+    d[src]=0;
+    while (pq.size()){
+        int node;ll val;
+        tie(val,node)=pq.top();
+        pq.pop();
+        if (d[node]!=val) continue;
+        for(auto u:g[node]){
+            int p=u.first;
+            ll dist=u.second+val;
+            if (dist<d[p]){
+                pq.push({d[p]=dist,p});
+            }
+        }
+    }
+}
+void dpdijisktra(int src,int srd){
+     dpu.clear();dpv.clear();dx.clear();
+     for (int i=1;i<=n;i++){
+         dpu[i]=LLONG_MAX;
+         dx[i]=LLONG_MAX;
+         dpv[i]=LLONG_MAX;
+     }
+     using T=pair<ll,int>;
+     priority_queue<T,vector<T>,greater<T>>pq;
+     dpu[u]=0;
+     dpv[v]=0;
+     dx[src]=0;
+     pq.push({0,src});
+     while(pq.size()){
+         int node;ll val;
+         tie(val,node)=pq.top();
+         pq.pop();
+         if (dx[node]!=val) continue;
+         for (auto u:g[node]){
+             int z=u.first;
+             ll dist=u.second+val;
+             if (dx[z]==dist){
+                 par[z]++;
+                 if (min(d0[z],dpu[node])+min(dpv[node],d1[z])<=dpu[z]+dpv[z]){
+                      dpu[z]=min(dpu[node],d0[z]);
+                      dpv[z]=min(dpv[node],d1[z]);
+                 }     
+             }
+             if (dx[z]>dist){
+                 par[z]++;
+                 dx[z]=dist;
+                 pq.push({dx[z],z});
+                 dpu[z]=min(dpu[node],d0[z]);
+                 dpv[z]=min(dpv[node],d1[z]);
+             }
+         }
+     } res=min(res,dpu[srd]+dpv[srd]);
+}
+int main(){
+    cin>>n>>m;
+    cin>>s>>t;
+    cin>>u>>v;
+    for (int i=0;i<m;i++){
+        int x,y; ll t;
+        cin>>x>>y>>t;
+        g[x].push_back({y,t});
+        g[y].push_back({x,t});
+    } for(int i=1;i<=n;i++){
+        d1[i]=LLONG_MAX;
+        d0[i]=LLONG_MAX;
+    }
+      dijisktra(u,d0);
+      dijisktra(v,d1);
+      res=d0[v];
+      dpdijisktra(s,t);
+      dpdijisktra(t,s);
+      cout <<res;
+}
