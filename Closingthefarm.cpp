@@ -1,54 +1,51 @@
-#include<bits/stdc++.h>
-#include<iostream>
-#include<vector>
+#include <bits/stdc++.h>
+#include <iostream>
 #include<queue>
+#include<vector>
 #include<utility>
 using namespace std;
 typedef long long ll;
-typedef long double ld;
 const int sz=2e5+1;
-bool on_stack[sz];
-vector<ll>g[sz];
-bool visited[sz];
 int n,m;
-void dfs(int node){
-     visited[node]=true;
-     for (int u:g[node]){
-         if (on_stack[u]) continue;
-         if (!visited[u]){
-             dfs(u);
-         }
-     }
+int ans=0;
+int cnt;
+vector<int>g[sz];
+int f[sz];
+int a[sz];
+int d[sz];
+bool p[sz];
+int get(int x){
+    if (f[x]<0) return x;
+    else return get(f[x]);
 }
-int connect(){
-    int ans=0;
-    for (int i=1;i<=n;i++){
-        visited[i]=0;
-    }
-    for (int i=1;i<=n;i++){
-        if (on_stack[i]) continue;
-        if (!visited[i]){
-            ans+=1;
-            dfs(i);
-        }
-    } if (ans==1){
-        return 1;
-    }else {
-        return 0;
-    }
-}    
 int main(){
     cin>>n>>m;
+    cnt=0;
     for (int i=0;i<m;i++){
         int u,v;
         cin>>u>>v;
         g[u].push_back(v);
         g[v].push_back(u);
-    } if (connect()) cout <<"YES"<<endl;
-    for (int i=1;i<n;i++){
-        int u;cin>>u;
-        on_stack[u]=true;
-        if (connect()) cout <<"YES"<<endl;
+    }  
+    for(int i=1;i<=n;i++){
+        cin>>a[i]; f[i]=i;
+    } 
+    for (int i=n;i>0;i--){
+           int x=a[i];
+           cnt++;
+           for (auto v:g[x]){
+                int y=v;
+                if (!p[y]) continue;
+                x=get(x),y=get(y);
+                if (x==y) continue;
+                f[x]=y;
+                cnt--;
+           } 
+            d[i]=cnt;
+            p[a[i]]=1;
+    } 
+     for (int i=1;i<=n;i++){
+        if (d[i]==1) cout <<"YES"<<endl;
         else cout <<"NO"<<endl;
     }
- } 
+}    
